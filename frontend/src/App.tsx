@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { isDemoMode } from "./api/client";
 import { AppShell, type Section } from "./components/AppShell";
 import { CreateConnectionDialog } from "./components/CreateConnectionDialog";
+import { DeleteConnectionDialog } from "./components/DeleteConnectionDialog";
 import { JournalView } from "./components/JournalView";
 import { PeerInspector } from "./components/PeerInspector";
 import { PeerTable } from "./components/PeerTable";
@@ -17,6 +18,7 @@ export default function App() {
   const [protocolId, setProtocolId] = useState<ProtocolId>("awg-legacy");
   const [selectedPeerId, setSelectedPeerId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const protocol = data?.protocols.find((item) => item.id === protocolId) ?? data?.protocols[0];
   const selectedPeer = useMemo(
@@ -64,13 +66,13 @@ export default function App() {
                   <PeerTable onSelect={setSelectedPeerId} peers={protocol.peers} selectedPeerId={selectedPeerId} />
                 ) : null}
               </main>
-              {selectedPeer ? <PeerInspector onClose={() => setSelectedPeerId(null)} peer={selectedPeer} /> : null}
+              {selectedPeer ? <PeerInspector canMutate={data.capabilities.can_mutate && protocol?.health === "healthy"} onClose={() => setSelectedPeerId(null)} onDelete={() => setDeleting(true)} peer={selectedPeer} /> : null}
             </div>
           </>
         )}
 
         <footer className="status-footer">
-          <span>{isDemoMode ? "Демонстрационные данные" : "Только управление подключениями"}</span><span aria-hidden="true">·</span><span>Контейнеры не изменяются</span>
+          <span>{isDemoMode ? "Демонстрационные данные" : "Управление подключениями"}</span><span aria-hidden="true">·</span><span>{data.capabilities.can_mutate && !isDemoMode ? "Резервная копия перед каждым изменением" : "Режим чтения"}</span>
         </footer>
       </div>
       {creating ? (
@@ -79,9 +81,11 @@ export default function App() {
           hostname={data.server.hostname}
           initialProtocol={protocol?.id ?? protocolId}
           onClose={() => setCreating(false)}
+          onCreated={refresh}
           protocols={data.protocols}
         />
       ) : null}
+      {deleting && selectedPeer && protocol ? <DeleteConnectionDialog key={`${protocol.id}-${selectedPeer.id}`} onClose={() => setDeleting(false)} onDeleted={() => { setDeleting(false); setSelectedPeerId(null); refresh(); }} peer={selectedPeer} protocol={protocol} /> : null}
     </AppShell>
   );
 }

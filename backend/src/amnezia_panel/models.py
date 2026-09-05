@@ -82,4 +82,21 @@ class ServerInventory(BaseModel):
 
 class HealthResponse(BaseModel):
     status: Literal["ok"] = "ok"
-    mode: Literal["read-only"] = "read-only"
+    mode: Literal["read-only", "management"] = "read-only"
+
+
+class CreatePeerRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    operation_id: str = Field(pattern=r"^[0-9a-f-]{36}$")
+    revision: str = Field(pattern=r"^[0-9a-f]{64}$")
+    name: str = Field(min_length=1, max_length=80)
+    keepalive: bool = True
+
+
+class DeletePeerRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    operation_id: str = Field(pattern=r"^[0-9a-f-]{36}$")
+    revision: str = Field(pattern=r"^[0-9a-f]{64}$")
+    name: str = Field(min_length=1, max_length=80)

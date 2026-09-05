@@ -1184,3 +1184,12 @@ p {
     display: none;
   }
 }
+.delete-dialog {
+  width: min(540px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  border-radius: 18px;
+  background: #fff;
+}
+.button--danger { background: #b42318; color: white; }
+.button--danger:hover:not(:disabled) { background: #912018; }

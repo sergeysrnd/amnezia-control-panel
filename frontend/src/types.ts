@@ -46,5 +46,21 @@ export interface ServerInventory {
 export interface CreatedConnection {
   filename: string;
   nativeConfig: string;
-  vpnUrl: string;
+  vpnUrl?: string;
+}
+
+export interface MutationPreflight {
+  revision: string;
+  next_ip: string | null;
+  endpoint: string;
+  dns: string;
+}
+
+export interface OperationResult {
+  operation_id: string;
+  status: string;
+  peer_id?: string;
+  replayed?: boolean;
+  filename?: string;
+  native_config?: string;
 }

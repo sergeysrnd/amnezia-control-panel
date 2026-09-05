@@ -6,7 +6,7 @@ async function copyText(value: string) {
   await navigator.clipboard.writeText(value);
 }
 
-export function PeerInspector({ peer, onClose }: { peer: Peer; onClose: () => void }) {
+export function PeerInspector({ peer, onClose, canMutate, onDelete }: { peer: Peer; onClose: () => void; canMutate: boolean; onDelete: () => void }) {
   return (
     <aside className="inspector" aria-label={`Сведения: ${peer.name}`}>
       <header className="inspector-header">
@@ -48,7 +48,7 @@ export function PeerInspector({ peer, onClose }: { peer: Peer; onClose: () => vo
         <button className="button button--secondary" disabled title="Приватный ключ не хранится" type="button">
           <DownloadIcon size={19} /> Скачать конфигурацию
         </button>
-        <button className="danger-action" disabled title="Недоступно в режиме чтения" type="button">
+        <button className="danger-action" disabled={!canMutate} onClick={onDelete} title={canMutate ? "Отозвать доступ клиента" : "Недоступно в режиме чтения"} type="button">
           <TrashIcon size={19} /> Отозвать доступ
         </button>
       </div>
