@@ -9,6 +9,11 @@ def test_rejects_ssh_option_as_target() -> None:
         SshDockerTransport("-oProxyCommand=unexpected")
 
 
+def test_rejects_non_positive_concurrency() -> None:
+    with pytest.raises(ValueError, match="max_concurrency"):
+        SshDockerTransport("amnezia-server", max_concurrency=0)
+
+
 @pytest.mark.asyncio
 async def test_rejects_non_allowlisted_path_before_execution() -> None:
     transport = SshDockerTransport("amnezia-server")

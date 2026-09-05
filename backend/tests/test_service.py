@@ -1,3 +1,4 @@
+import asyncio
 from dataclasses import dataclass
 
 import pytest
@@ -9,7 +10,11 @@ from amnezia_panel.service import InventoryService
 
 @dataclass
 class FakeTransport:
+    hostname_calls: int = 0
+
     async def hostname(self) -> str:
+        self.hostname_calls += 1
+        await asyncio.sleep(0)
         return "vpn.example.test"
 
     async def read_file(self, spec: ProtocolSpec, path: str) -> str:
@@ -26,7 +31,8 @@ class FakeTransport:
 
 @pytest.mark.asyncio
 async def test_inventory_is_read_only_and_merges_metadata() -> None:
-    inventory = await InventoryService(FakeTransport()).inventory()
+    transport = FakeTransport()
+    inventory = await InventoryService(transport).inventory()
 
     assert inventory.server.hostname == "vpn.example.test"
     assert inventory.capabilities.can_mutate is False
@@ -34,3 +40,14 @@ async def test_inventory_is_read_only_and_merges_metadata() -> None:
     assert inventory.protocols[0].peers[0].name == "Телефон"
     assert inventory.protocols[0].peers[0].status is PeerStatus.OFFLINE
     assert inventory.protocols[0].peers[0].public_key_fingerprint == "peer-a"
+
+
+@pytest.mark.asyncio
+async def test_concurrent_inventory_requests_share_one_refresh() -> None:
+    transport = FakeTransport()
+    service = InventoryService(transport, cache_ttl_seconds=5)
+
+    inventories = await asyncio.gather(*(service.inventory() for _ in range(6)))
+
+    assert transport.hostname_calls == 1
+    assert all(inventory is inventories[0] for inventory in inventories)

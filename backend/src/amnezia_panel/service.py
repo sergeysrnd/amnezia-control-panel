@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import time
 from datetime import UTC, datetime
 
 from amnezia_panel.models import (
@@ -28,10 +29,28 @@ from amnezia_panel.transport import DockerTransport, TransportError
 
 
 class InventoryService:
-    def __init__(self, transport: DockerTransport) -> None:
+    def __init__(self, transport: DockerTransport, *, cache_ttl_seconds: float = 5.0) -> None:
         self._transport = transport
+        self._cache_ttl_seconds = max(0.0, cache_ttl_seconds)
+        self._cached_inventory: ServerInventory | None = None
+        self._cache_expires_at = 0.0
+        self._refresh_lock = asyncio.Lock()
 
     async def inventory(self) -> ServerInventory:
+        now = time.monotonic()
+        if self._cached_inventory is not None and now < self._cache_expires_at:
+            return self._cached_inventory
+
+        async with self._refresh_lock:
+            now = time.monotonic()
+            if self._cached_inventory is not None and now < self._cache_expires_at:
+                return self._cached_inventory
+            inventory = await self._load_inventory()
+            self._cached_inventory = inventory
+            self._cache_expires_at = time.monotonic() + self._cache_ttl_seconds
+            return inventory
+
+    async def _load_inventory(self) -> ServerInventory:
         hostname_task = asyncio.create_task(self._transport.hostname())
         protocol_tasks = [asyncio.create_task(self._inspect(spec)) for spec in PROTOCOLS]
         hostname_result, *protocol_results = await asyncio.gather(

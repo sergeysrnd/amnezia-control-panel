@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Protocol
 
 from amnezia_panel.protocols import ProtocolSpec
@@ -22,14 +22,19 @@ class DockerTransport(Protocol):
     async def hostname(self) -> str: ...
 
 
-@dataclass(frozen=True, slots=True)
+@dataclass(slots=True)
 class SshDockerTransport:
     target: str
     timeout_seconds: float = 10.0
+    max_concurrency: int = 4
+    _semaphore: asyncio.Semaphore = field(init=False, repr=False)
 
     def __post_init__(self) -> None:
         if not TARGET_RE.fullmatch(self.target):
             raise ValueError("Invalid SSH target")
+        if self.max_concurrency < 1:
+            raise ValueError("max_concurrency must be positive")
+        self._semaphore = asyncio.Semaphore(self.max_concurrency)
 
     async def read_file(self, spec: ProtocolSpec, path: str) -> str:
         if path not in {spec.config_path, spec.clients_table_path}:
@@ -51,26 +56,27 @@ class SshDockerTransport:
         return (await self._run_remote("hostname", "-f")).strip()
 
     async def _run_remote(self, *command: str) -> str:
-        process = await asyncio.create_subprocess_exec(
-            "ssh",
-            "-o",
-            "BatchMode=yes",
-            "-o",
-            f"ConnectTimeout={max(1, int(self.timeout_seconds))}",
-            self.target,
-            *command,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE,
-        )
-        try:
-            stdout, stderr = await asyncio.wait_for(
-                process.communicate(), timeout=self.timeout_seconds
+        async with self._semaphore:
+            process = await asyncio.create_subprocess_exec(
+                "ssh",
+                "-o",
+                "BatchMode=yes",
+                "-o",
+                f"ConnectTimeout={max(1, int(self.timeout_seconds))}",
+                self.target,
+                *command,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
             )
-        except TimeoutError as error:
-            process.kill()
-            await process.wait()
-            raise TransportError("Remote read timed out") from error
-        if process.returncode != 0:
-            message = stderr.decode(errors="replace").strip()
-            raise TransportError(message or "Remote read failed")
-        return stdout.decode(errors="strict")
+            try:
+                stdout, stderr = await asyncio.wait_for(
+                    process.communicate(), timeout=self.timeout_seconds
+                )
+            except TimeoutError as error:
+                process.kill()
+                await process.wait()
+                raise TransportError("Remote read timed out") from error
+            if process.returncode != 0:
+                message = stderr.decode(errors="replace").strip()
+                raise TransportError(message or "Remote read failed")
+            return stdout.decode(errors="strict")
