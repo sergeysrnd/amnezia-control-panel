@@ -25,4 +25,3 @@ export function HealthIndicator({ health }: { health: HealthStatus }) {
     </span>
   );
 }
-

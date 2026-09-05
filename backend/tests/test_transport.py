@@ -15,4 +15,3 @@ async def test_rejects_non_allowlisted_path_before_execution() -> None:
 
     with pytest.raises(ValueError, match="not allowlisted"):
         await transport.read_file(PROTOCOLS[0], "/etc/shadow")
-

@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 
+import { isDemoMode } from "./api/client";
 import { AppShell, type Section } from "./components/AppShell";
 import { CreateConnectionDialog } from "./components/CreateConnectionDialog";
 import { JournalView } from "./components/JournalView";
@@ -69,7 +70,7 @@ export default function App() {
         )}
 
         <footer className="status-footer">
-          <span>Только управление подключениями</span><span aria-hidden="true">·</span><span>Контейнеры не изменяются</span>
+          <span>{isDemoMode ? "Демонстрационные данные" : "Только управление подключениями"}</span><span aria-hidden="true">·</span><span>Контейнеры не изменяются</span>
         </footer>
       </div>
       {creating ? (

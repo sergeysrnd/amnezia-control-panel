@@ -72,4 +72,3 @@ export function CheckIcon(props: IconProps) {
 export function WarningIcon(props: IconProps) {
   return <IconBase {...props}><path {...strokeProps} d="M10.3 3.8 2.5 18a2 2 0 0 0 1.75 3h15.5a2 2 0 0 0 1.75-3L13.7 3.8a2 2 0 0 0-3.4 0ZM12 9v4M12 17h.01" /></IconBase>;
 }
-

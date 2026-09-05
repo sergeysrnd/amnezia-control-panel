@@ -55,4 +55,3 @@ export function PeerInspector({ peer, onClose }: { peer: Peer; onClose: () => vo
     </aside>
   );
 }
-

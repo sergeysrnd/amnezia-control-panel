@@ -40,4 +40,3 @@ export function truncateEndpoint(endpoint: string | null): string {
   if (endpoint.length <= 24) return endpoint;
   return `${endpoint.slice(0, 13)}…${endpoint.slice(-8)}`;
 }
-

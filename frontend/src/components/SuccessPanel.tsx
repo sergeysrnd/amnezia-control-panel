@@ -31,4 +31,3 @@ export default function SuccessPanel({ connection }: { connection: CreatedConnec
     </section>
   );
 }
-

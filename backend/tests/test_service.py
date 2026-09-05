@@ -34,4 +34,3 @@ async def test_inventory_is_read_only_and_merges_metadata() -> None:
     assert inventory.protocols[0].peers[0].name == "Телефон"
     assert inventory.protocols[0].peers[0].status is PeerStatus.OFFLINE
     assert inventory.protocols[0].peers[0].public_key_fingerprint == "peer-a"
-

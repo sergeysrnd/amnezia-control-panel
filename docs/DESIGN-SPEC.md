@@ -38,4 +38,3 @@ Consistent outline icons at 1.75 px stroke: overview monitor, users, log documen
 - Under 1180 px the sidebar becomes an icon rail and inspector becomes an overlay drawer.
 - Under 760 px navigation becomes a bottom bar; the table scrolls horizontally; inspector is full-width; creation modal becomes a full-height sheet.
 - Content text and controls remain code-native at every breakpoint.
-

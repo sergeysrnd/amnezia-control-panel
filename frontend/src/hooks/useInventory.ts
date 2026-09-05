@@ -49,4 +49,3 @@ export function useInventory(): InventoryState {
 
   return { data, error, loading, refreshing, refresh };
 }
-

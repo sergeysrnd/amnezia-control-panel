@@ -74,4 +74,3 @@ class SshDockerTransport:
             message = stderr.decode(errors="replace").strip()
             raise TransportError(message or "Remote read failed")
         return stdout.decode(errors="strict")
-

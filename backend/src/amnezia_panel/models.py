@@ -83,4 +83,3 @@ class ServerInventory(BaseModel):
 class HealthResponse(BaseModel):
     status: Literal["ok"] = "ok"
     mode: Literal["read-only"] = "read-only"
-

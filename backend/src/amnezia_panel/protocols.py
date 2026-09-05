@@ -43,4 +43,3 @@ PROTOCOLS: tuple[ProtocolSpec, ...] = (
         interface="wg0",
     ),
 )
-

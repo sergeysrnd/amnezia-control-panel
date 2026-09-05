@@ -14,4 +14,3 @@ export function JournalView({ inventory }: { inventory: ServerInventory }) {
     </section>
   );
 }
-

@@ -1,10 +1,10 @@
 import { mockInventory } from "../data/mockInventory";
 import type { CreatedConnection, ProtocolId, ServerInventory } from "../types";
 
-const demoMode = import.meta.env.VITE_DEMO_MODE === "true";
+export const isDemoMode = import.meta.env.VITE_DEMO_MODE === "true";
 
 export async function fetchInventory(signal?: AbortSignal): Promise<ServerInventory> {
-  if (demoMode) {
+  if (isDemoMode) {
     await delay(180, signal);
     return structuredClone(mockInventory);
   }
@@ -23,7 +23,7 @@ export async function createDemoConnection(input: {
   name: string;
   protocol: ProtocolId;
 }): Promise<CreatedConnection> {
-  if (!demoMode) {
+  if (!isDemoMode) {
     throw new Error("API работает в режиме чтения");
   }
   await delay(420);

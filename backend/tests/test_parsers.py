@@ -79,4 +79,3 @@ def test_status_boundaries() -> None:
 
 def test_fingerprint_redacts_middle() -> None:
     assert fingerprint("1234567890abcdefghijklmnop") == "12345678…klmnop"
-

@@ -223,4 +223,3 @@ def _parse_int(value: str) -> int:
         return int(value)
     except (TypeError, ValueError):
         return 0
-

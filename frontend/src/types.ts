@@ -48,4 +48,3 @@ export interface CreatedConnection {
   nativeConfig: string;
   vpnUrl: string;
 }
-

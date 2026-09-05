@@ -61,4 +61,3 @@ export const mockInventory: ServerInventory = {
     protocol("wireguard", "WireGuard", "wireguard", 1, 48213),
   ],
 };
-
