@@ -109,6 +109,10 @@ def create_app(
     async def session():
         return {"token": token if enabled else None}
 
+    @app.get("/api/v1/journal")
+    async def journal(request: Request):
+        return await request.app.state.mutations.call({"action": "journal"})
+
     @app.get("/api/health", response_model=HealthResponse)
     async def health() -> HealthResponse:
         return HealthResponse(mode="management" if enabled else "read-only")

@@ -46,6 +46,7 @@
 - [План работ](docs/ROADMAP.md)
 - [Снимок тестового сервера](docs/SERVER-INVENTORY.md)
 - [Установка, операции и восстановление](docs/OPERATIONS.md)
+- [Обзор, клиенты и журнал](docs/NAVIGATION.md)
 
 ## Важное ограничение
 

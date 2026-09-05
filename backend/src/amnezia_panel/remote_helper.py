@@ -382,8 +382,44 @@ class TransactionEngine:
         return result
 
 
+def read_journal(root: Path) -> dict:
+    require(root.is_dir(), "journal_unavailable")
+    events = []
+    skipped = 0
+    phases = TERMINAL | {"prepared", "writing", "applying", "rolling_back", "recovery_required"}
+    for protocol in SPECS:
+        for path in (root / protocol).glob("*/state.json"):
+            try:
+                require(not path.is_symlink() and not path.parent.is_symlink())
+                require(str(uuid.UUID(path.parent.name)) == path.parent.name)
+                require(path.stat().st_size < 65536)
+                state = json.loads(path.read_text())
+                require(state["action"] in {"create", "delete"} and state["phase"] in phases)
+                created = datetime.fromisoformat(state["created_at"]).astimezone(UTC).isoformat()
+                identifier = state.get("peer_id")
+                require(
+                    isinstance(identifier, str) and bool(re.fullmatch(r"[0-9a-f]{20}", identifier))
+                )
+                events.append(
+                    {
+                        "id": path.parent.name,
+                        "protocol": protocol,
+                        "action": state["action"],
+                        "status": state["phase"],
+                        "peer_id": identifier,
+                        "created_at": created,
+                    }
+                )
+            except (OSError, ValueError, KeyError, TypeError, MutationError):
+                skipped += 1
+    events.sort(key=lambda item: (item["created_at"], item["id"]), reverse=True)
+    return {"events": events[:100], "total": len(events), "skipped": skipped}
+
+
 def dispatch(request: dict, root: Path = ROOT) -> dict:
     require(isinstance(request, dict), "invalid_request")
+    if request == {"action": "journal"}:
+        return read_journal(root)
     protocol = request.get("protocol")
     require(protocol in SPECS, "invalid_protocol")
     policy_path = root / "policy.json"

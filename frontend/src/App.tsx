@@ -5,6 +5,7 @@ import { AppShell, type Section } from "./components/AppShell";
 import { CreateConnectionDialog } from "./components/CreateConnectionDialog";
 import { DeleteConnectionDialog } from "./components/DeleteConnectionDialog";
 import { JournalView } from "./components/JournalView";
+import { Overview } from "./components/Overview";
 import { PeerInspector } from "./components/PeerInspector";
 import { PeerTable } from "./components/PeerTable";
 import { PlusIcon, RefreshIcon, WarningIcon } from "./components/Icons";
@@ -41,7 +42,7 @@ export default function App() {
 
   return (
     <AppShell activeSection={section} onSectionChange={setSection}>
-      <div className="workspace">
+      <div className="workspace" data-section={section}>
         <header className="server-header">
           <div className="server-identity"><strong>Сервер</strong><span>{data.server.hostname}</span></div>
           <div className="server-actions">
@@ -50,14 +51,14 @@ export default function App() {
           </div>
         </header>
 
-        {section === "journal" ? <JournalView inventory={data} /> : (
+        {section === "journal" ? <JournalView /> : section === "overview" ? <Overview inventory={data} onOpen={(id) => { selectProtocol(id); setSection("clients"); }} /> : (
           <>
             <ProtocolSwitcher onSelect={selectProtocol} protocols={data.protocols} selected={protocol?.id ?? protocolId} />
             <div className="content-with-inspector" data-inspector-open={Boolean(selectedPeer)}>
               <main className="main-content">
                 <div className="content-header">
                   <div>
-                    <h1>{section === "clients" ? "Все подключения" : "Подключения"}</h1>
+                    <h1>Клиенты</h1>
                     {protocol?.warning ? <p className="protocol-warning"><WarningIcon size={17} />{protocol.warning}</p> : null}
                   </div>
                   <button className="button button--primary" onClick={() => setCreating(true)} type="button"><PlusIcon size={19} />Новое подключение</button>

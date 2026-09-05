@@ -26,6 +26,8 @@ export function AppShell({
         <nav className="main-nav">
           {navigation.map(({ id, label, icon: Icon }) => (
             <button
+              aria-current={activeSection === id ? "page" : undefined}
+              title={label}
               className="nav-item"
               data-active={activeSection === id}
               key={id}
