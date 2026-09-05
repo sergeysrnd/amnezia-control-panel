@@ -104,4 +104,3 @@ Existing official Amnezia containers
 - Privileged helper: небольшой отдельный сервис с Unix socket и жёсткой схемой команд; после прототипа предпочтительно Go.
 - Тесты: pytest, property-based тесты parser/renderer, Playwright для UI.
 - Доставка: systemd units и воспроизводимые пакеты/образы; без монтирования Docker socket в web-контейнер.
-
