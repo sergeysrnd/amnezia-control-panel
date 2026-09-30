@@ -51,3 +51,26 @@ async def test_concurrent_inventory_requests_share_one_refresh() -> None:
 
     assert transport.hostname_calls == 1
     assert all(inventory is inventories[0] for inventory in inventories)
+
+
+@pytest.mark.asyncio
+async def test_invalidation_during_refresh_does_not_cache_stale_inventory() -> None:
+    started = asyncio.Event()
+    release = asyncio.Event()
+
+    class BlockingTransport(FakeTransport):
+        async def hostname(self) -> str:
+            self.hostname_calls += 1
+            started.set()
+            await release.wait()
+            return "vpn.example.test"
+
+    transport = BlockingTransport()
+    service = InventoryService(transport, cache_ttl_seconds=60)
+    pending = asyncio.create_task(service.inventory())
+    await started.wait()
+    service.invalidate()
+    release.set()
+    await pending
+    await service.inventory()
+    assert transport.hostname_calls == 2

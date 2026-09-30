@@ -27,6 +27,7 @@ class SshDockerTransport:
     target: str
     timeout_seconds: float = 10.0
     max_concurrency: int = 4
+    local: bool = False
     _semaphore: asyncio.Semaphore = field(init=False, repr=False)
 
     def __post_init__(self) -> None:
@@ -57,14 +58,21 @@ class SshDockerTransport:
 
     async def _run_remote(self, *command: str) -> str:
         async with self._semaphore:
+            arguments = (
+                command
+                if self.local
+                else (
+                    "ssh",
+                    "-o",
+                    "BatchMode=yes",
+                    "-o",
+                    f"ConnectTimeout={max(1, int(self.timeout_seconds))}",
+                    self.target,
+                    *command,
+                )
+            )
             process = await asyncio.create_subprocess_exec(
-                "ssh",
-                "-o",
-                "BatchMode=yes",
-                "-o",
-                f"ConnectTimeout={max(1, int(self.timeout_seconds))}",
-                self.target,
-                *command,
+                *arguments,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
@@ -72,9 +80,12 @@ class SshDockerTransport:
                 stdout, stderr = await asyncio.wait_for(
                     process.communicate(), timeout=self.timeout_seconds
                 )
-            except TimeoutError as error:
-                process.kill()
+            except (TimeoutError, asyncio.CancelledError) as error:
+                if process.returncode is None:
+                    process.kill()
                 await process.wait()
+                if isinstance(error, asyncio.CancelledError):
+                    raise
                 raise TransportError("Remote read timed out") from error
             if process.returncode != 0:
                 message = stderr.decode(errors="replace").strip()

@@ -11,6 +11,7 @@ from amnezia_panel.transport import TARGET_RE
 @dataclass
 class MutationService:
     target: str
+    local: bool = False
     _lock: asyncio.Lock = field(default_factory=asyncio.Lock)
 
     def __post_init__(self) -> None:
@@ -20,19 +21,23 @@ class MutationService:
     async def call(self, payload: dict) -> dict:
         # Root helper holds an OS lock too, across API workers and reconnects.
         async with self._lock:
+            command = ("python3", "/opt/amnezia-control/remote_helper.py")
+            if not self.local:
+                command = (
+                    "ssh",
+                    "-o",
+                    "BatchMode=yes",
+                    "-o",
+                    "ConnectTimeout=10",
+                    "-o",
+                    "ServerAliveInterval=15",
+                    "-o",
+                    "ServerAliveCountMax=3",
+                    self.target,
+                    *command,
+                )
             process = await asyncio.create_subprocess_exec(
-                "ssh",
-                "-o",
-                "BatchMode=yes",
-                "-o",
-                "ConnectTimeout=10",
-                "-o",
-                "ServerAliveInterval=15",
-                "-o",
-                "ServerAliveCountMax=3",
-                self.target,
-                "python3",
-                "/opt/amnezia-control/remote_helper.py",
+                *command,
                 stdin=asyncio.subprocess.PIPE,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,

@@ -56,6 +56,9 @@
 
 ## Локальная разработка
 
+Серверный запуск с доступом через SSH-туннель описан в
+[deploy/README.md](deploy/README.md). API и frontend слушают только localhost.
+
 Требования: Python 3.12+, `uv`, Node.js 24+, npm и работающий SSH alias до тестового сервера.
 
 ```bash

@@ -35,8 +35,10 @@ class InventoryService:
         self._cached_inventory: ServerInventory | None = None
         self._cache_expires_at = 0.0
         self._refresh_lock = asyncio.Lock()
+        self._cache_generation = 0
 
     def invalidate(self) -> None:
+        self._cache_generation += 1
         self._cache_expires_at = 0.0
 
     async def inventory(self) -> ServerInventory:
@@ -48,9 +50,14 @@ class InventoryService:
             now = time.monotonic()
             if self._cached_inventory is not None and now < self._cache_expires_at:
                 return self._cached_inventory
+            generation = self._cache_generation
             inventory = await self._load_inventory()
             self._cached_inventory = inventory
-            self._cache_expires_at = time.monotonic() + self._cache_ttl_seconds
+            self._cache_expires_at = (
+                time.monotonic() + self._cache_ttl_seconds
+                if generation == self._cache_generation
+                else 0.0
+            )
             return inventory
 
     async def _load_inventory(self) -> ServerInventory:

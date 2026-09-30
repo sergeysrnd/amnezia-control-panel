@@ -1,0 +1,24 @@
+[Unit]
+Description=Amnezia Control Panel (SSH tunnel access)
+After=docker.service network.target
+Requires=docker.service
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/amnezia-panel/current/backend
+Environment=AMNEZIA_LOCAL_TRANSPORT=true
+Environment=AMNEZIA_ENABLE_MUTATIONS=true
+Environment=AMNEZIA_STATIC_DIR=/opt/amnezia-panel/current/frontend/dist
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/opt/amnezia-panel/venv/bin/uvicorn amnezia_panel.main:app --app-dir /opt/amnezia-panel/current/backend/src --host 127.0.0.1 --port 8000
+Restart=on-failure
+RestartSec=5
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/amnezia-control
+
+[Install]
+WantedBy=multi-user.target

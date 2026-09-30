@@ -9,6 +9,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 from starlette.responses import JSONResponse
+from starlette.staticfiles import StaticFiles
 
 from amnezia_panel.models import (
     Capabilities,
@@ -43,14 +44,17 @@ def create_app(
         else enable_mutations
     )
     token = secrets.token_urlsafe(32)
+    local = os.getenv("AMNEZIA_LOCAL_TRANSPORT") == "true"
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         app.state.inventory_service = service or InventoryService(
-            SshDockerTransport(target=os.getenv("AMNEZIA_SSH_TARGET", "amnezia-server"))
+            SshDockerTransport(
+                target=os.getenv("AMNEZIA_SSH_TARGET", "amnezia-server"), local=local
+            )
         )
         app.state.mutations = mutations or MutationService(
-            target=os.getenv("AMNEZIA_SSH_TARGET", "amnezia-server")
+            target=os.getenv("AMNEZIA_SSH_TARGET", "amnezia-server"), local=local
         )
         yield
 
@@ -164,6 +168,10 @@ def create_app(
             request,
             {**body.model_dump(), "action": "delete", "protocol": protocol, "peer_id": peer_id},
         )
+
+    static_dir = os.getenv("AMNEZIA_STATIC_DIR")
+    if static_dir:
+        app.mount("/", StaticFiles(directory=static_dir, html=True), name="frontend")
 
     return app
 

@@ -29,15 +29,17 @@ export function useInventory(): InventoryState {
 
     void fetchInventory(controller.signal)
       .then((inventory) => {
+        if (controller.signal.aborted) return;
         setData(inventory);
         setError(null);
         initialLoad.current = false;
       })
       .catch((reason: unknown) => {
+        if (controller.signal.aborted) return;
         if (reason instanceof DOMException && reason.name === "AbortError") return;
         setError(reason instanceof Error ? reason.message : "Не удалось загрузить сервер");
       })
-      .finally(() => setLoading(false));
+      .finally(() => { if (!controller.signal.aborted) setLoading(false); });
 
     return () => controller.abort();
   }, [refreshToken]);

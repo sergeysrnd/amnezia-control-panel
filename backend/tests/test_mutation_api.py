@@ -73,3 +73,19 @@ def test_conflict_and_invalid_input_never_leak_secrets():
         assert response.status_code == 409
         assert response.json() == {"error": "revision_conflict"}
         assert inventory.invalidations == 1
+
+
+def test_server_frontend_keeps_api_and_host_protection(tmp_path, monkeypatch):
+    (tmp_path / "index.html").write_text("<html>Panel</html>")
+    monkeypatch.setenv("AMNEZIA_STATIC_DIR", str(tmp_path))
+    with TestClient(
+        create_app(Inventory(), Mutations(), enable_mutations=True),
+        base_url="http://localhost:8000",
+    ) as client:
+        response = client.get("/")
+        assert response.status_code == 200
+        assert "Panel" in response.text
+        assert response.headers["cache-control"] == "no-store"
+        assert client.get("/api/health").json()["mode"] == "management"
+        assert client.get("/", headers={"Host": "evil.example"}).status_code == 400
+        assert client.get("/api/nonexistent").status_code == 404
