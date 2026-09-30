@@ -32,6 +32,22 @@ BODY = {
 URL = "/api/v1/protocols/wireguard/peers"
 
 
+def test_vpn_origin_requires_explicit_configuration_and_token(monkeypatch):
+    monkeypatch.setenv("AMNEZIA_EXTRA_HOSTS", "10.8.1.0")
+    monkeypatch.setenv("AMNEZIA_EXTRA_ORIGINS", "http://10.8.1.0:8000")
+    mutations = Mutations()
+    with TestClient(
+        create_app(Inventory(), mutations, enable_mutations=True),
+        base_url="http://10.8.1.0:8000",
+    ) as client:
+        token = client.get("/api/v1/session").json()["token"]
+        headers = {"Origin": "http://10.8.1.0:8000", "X-Amnezia-Token": token}
+        assert client.post(URL, json=BODY, headers=headers).status_code == 200
+        headers["Origin"] = "http://10.8.1.6:8000"
+        assert client.post(URL, json=BODY, headers=headers).status_code == 403
+        assert client.get("/api/health", headers={"Host": "evil.example"}).status_code == 400
+
+
 def test_writes_require_origin_and_session_token():
     mutations = Mutations()
     with TestClient(

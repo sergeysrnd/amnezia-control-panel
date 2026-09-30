@@ -45,6 +45,14 @@ def create_app(
     )
     token = secrets.token_urlsafe(32)
     local = os.getenv("AMNEZIA_LOCAL_TRANSPORT") == "true"
+    origins = ORIGINS | {
+        value.strip()
+        for value in os.getenv("AMNEZIA_EXTRA_ORIGINS", "").split(",")
+        if value.strip()
+    }
+    hosts = ["127.0.0.1", "localhost"] + [
+        value.strip() for value in os.getenv("AMNEZIA_EXTRA_HOSTS", "").split(",") if value.strip()
+    ]
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -67,12 +75,12 @@ def create_app(
     )
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=list(ORIGINS),
+        allow_origins=list(origins),
         allow_credentials=False,
         allow_methods=["GET", "POST", "DELETE"],
         allow_headers=["Accept", "Content-Type", "X-Amnezia-Token"],
     )
-    app.add_middleware(TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost"])
+    app.add_middleware(TrustedHostMiddleware, allowed_hosts=hosts)
 
     @app.middleware("http")
     async def guard(request: Request, call_next):
@@ -80,7 +88,7 @@ def create_app(
             if not enabled:
                 return JSONResponse({"error": "read_only"}, status_code=403)
             if (
-                request.headers.get("origin") not in ORIGINS
+                request.headers.get("origin") not in origins
                 or not secrets.compare_digest(request.headers.get("x-amnezia-token", ""), token)
                 or request.headers.get("content-type", "").split(";")[0] != "application/json"
             ):

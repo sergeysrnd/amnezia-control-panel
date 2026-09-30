@@ -1,0 +1,15 @@
+[Unit]
+Description=Amnezia panel access for VPN administrator 10.8.1.5
+After=docker.service amnezia-panel.service
+Requires=docker.service amnezia-panel.service
+
+[Service]
+Type=simple
+ExecStart=/opt/amnezia-panel/vpn-admin-proxy.sh
+Restart=on-failure
+RestartSec=3
+KillMode=control-group
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target
